@@ -67,3 +67,72 @@ public final class AI_scope {
     public static final String ADDRESS_E = "0x2E6DA5a251D954dB55F5D249EcC2A110347893cE";
     public static final String ADDRESS_F = "0xa18319D6f2088D4F8621b161b030C12c82c9F6C0";
     public static final String ADDRESS_G = "0xA44f037Fad22197307c9EE9dD66593ACC36258B4";
+    public static final String ADDRESS_H = "0x5aaAF2E3d122A6A7dD0061b2CB0b960BDB192ba9";
+    public static final String LATTICE_DOMAIN_HEX =
+            "0x02da7D4faC8a6080eb5b5fAe8CAca048d7ddB1Ec2c23B5B92C30F1eabeFD0efe";
+
+    private final AIScopeRuntimeConfig runtimeConfig;
+    private final ExperimentRegistry experimentRegistry;
+    private final HypothesisGraph hypothesisGraph;
+    private final DatasetVault datasetVault;
+    private final ModelScopeAnalyzer modelScopeAnalyzer;
+    private final InferenceScheduler inferenceScheduler;
+    private final AttestationBridge attestationBridge;
+    private final ResearchLedger researchLedger;
+    private final MetricsAggregator metricsAggregator;
+    private final ScopeValidator scopeValidator;
+    private final ReportRenderer reportRenderer;
+    private final AtomicBoolean lanePaused;
+    private final AtomicLong epochCounter;
+    private final Instant bootInstant;
+
+    public AI_scope(AIScopeRuntimeConfig runtimeConfig) {
+        this.runtimeConfig = Objects.requireNonNull(runtimeConfig, "runtimeConfig");
+        this.experimentRegistry = new ExperimentRegistry(MAX_EXPERIMENTS);
+        this.hypothesisGraph = new HypothesisGraph(MAX_HYPOTHESES);
+        this.datasetVault = new DatasetVault(MAX_DATASET_SLOTS);
+        this.modelScopeAnalyzer = new ModelScopeAnalyzer(MAX_SCOPE_DEPTH);
+        this.inferenceScheduler = new InferenceScheduler(MAX_INFERENCE_BATCH);
+        this.attestationBridge = new AttestationBridge(runtimeConfig);
+        this.researchLedger = new ResearchLedger();
+        this.metricsAggregator = new MetricsAggregator(METRIC_RING_SIZE);
+        this.scopeValidator = new ScopeValidator();
+        this.reportRenderer = new ReportRenderer();
+        this.lanePaused = new AtomicBoolean(false);
+        this.epochCounter = new AtomicLong(0L);
+        this.bootInstant = Instant.now();
+    }
+
+    public static AI_scope bootstrapDefault() {
+        AIScopeRuntimeConfig cfg = new AIScopeRuntimeConfig(
+                DEFAULT_CHAIN_ID,
+                ADDRESS_A,
+                ADDRESS_B,
+                ADDRESS_C,
+                ADDRESS_D,
+                ADDRESS_E,
+                LATTICE_DOMAIN_HEX,
+                RELEASE_TAG
+        );
+        return new AI_scope(cfg);
+    }
+
+    public AIScopeRuntimeConfig getRuntimeConfig() {
+        return runtimeConfig;
+    }
+
+    public ExperimentRegistry experiments() {
+        return experimentRegistry;
+    }
+
+    public HypothesisGraph hypotheses() {
+        return hypothesisGraph;
+    }
+
+    public DatasetVault datasets() {
+        return datasetVault;
+    }
+
+    public ModelScopeAnalyzer modelScopes() {
+        return modelScopeAnalyzer;
+    }
