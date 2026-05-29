@@ -274,3 +274,72 @@ public final class AI_scope {
                 MessageDigest md = MessageDigest.getInstance(DIGEST_ALGORITHM);
                 md.update(DOMAIN_SEPARATOR.getBytes(StandardCharsets.UTF_8));
                 md.update(ByteBuffer.allocate(8).putLong(chainId).array());
+                md.update(latticeHex.getBytes(StandardCharsets.UTF_8));
+                md.update(version.getBytes(StandardCharsets.UTF_8));
+                return md.digest();
+            } catch (NoSuchAlgorithmException e) {
+                throw new ScopeLens_DigestFailureException(e);
+            }
+        }
+
+        private static String normalizeAddress(String addr) {
+            if (addr == null || addr.isBlank()) {
+                throw new ScopeLens_InvalidAddressException("empty address");
+            }
+            String trimmed = addr.trim();
+            if (!trimmed.startsWith("0x") || trimmed.length() != 42) {
+                throw new ScopeLens_InvalidAddressException(trimmed);
+            }
+            return trimmed;
+        }
+
+        public long getChainId() {
+            return chainId;
+        }
+
+        public String getDirectorAddress() {
+            return directorAddress;
+        }
+
+        public String getCuratorAddress() {
+            return curatorAddress;
+        }
+
+        public String getOracleAddress() {
+            return oracleAddress;
+        }
+
+        public String getRelayAddress() {
+            return relayAddress;
+        }
+
+        public String getAttestationSink() {
+            return attestationSink;
+        }
+
+        public String getLatticeDomainHex() {
+            return latticeDomainHex;
+        }
+
+        public String getVersionTag() {
+            return versionTag;
+        }
+
+        public byte[] getDomainSeed() {
+            return Arrays.copyOf(domainSeed, domainSeed.length);
+        }
+    }
+
+    // ─── Domain exceptions ───────────────────────────────────────────────────────
+
+    public static class ScopeLens_LaneFrozenException extends RuntimeException {
+        public ScopeLens_LaneFrozenException() {
+            super("ScopeLens: lane frozen");
+        }
+    }
+
+    public static class ScopeLens_CapacityExceededException extends RuntimeException {
+        public ScopeLens_CapacityExceededException(String detail) {
+            super("ScopeLens: capacity exceeded — " + detail);
+        }
+    }
