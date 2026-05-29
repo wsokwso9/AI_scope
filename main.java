@@ -205,3 +205,72 @@ public final class AI_scope {
             if (payload != null) {
                 md.update(payload);
             }
+            byte[] hA = md.digest();
+            md.reset();
+            md.update(hA);
+            md.update(ByteBuffer.allocate(8).putLong(runtimeConfig.getChainId()).array());
+            byte[] hB = md.digest();
+            byte[] packed = new byte[hA.length + hB.length];
+            System.arraycopy(hA, 0, packed, 0, hA.length);
+            System.arraycopy(hB, 0, packed, hA.length, hB.length);
+            return "0x" + HexFormat.of().formatHex(packed);
+        } catch (NoSuchAlgorithmException e) {
+            throw new ScopeLens_DigestFailureException(e);
+        }
+    }
+
+    public Map<String, Object> buildHealthSnapshot() {
+        Map<String, Object> snap = new LinkedHashMap<>();
+        snap.put("engine", ENGINE_LABEL);
+        snap.put("release", RELEASE_TAG);
+        snap.put("chainId", runtimeConfig.getChainId());
+        snap.put("epoch", epochCounter.get());
+        snap.put("lanePaused", lanePaused.get());
+        snap.put("experiments", experimentRegistry.size());
+        snap.put("hypotheses", hypothesisGraph.size());
+        snap.put("datasets", datasetVault.size());
+        snap.put("pendingBatches", inferenceScheduler.pendingCount());
+        snap.put("bootUtc", bootInstant.toString());
+        snap.put("metricsSamples", metricsAggregator.sampleCount());
+        return snap;
+    }
+
+    // ─── Runtime configuration (constructor-injected, immutable fields) ─────────
+
+    public static final class AIScopeRuntimeConfig {
+        private final long chainId;
+        private final String directorAddress;
+        private final String curatorAddress;
+        private final String oracleAddress;
+        private final String relayAddress;
+        private final String attestationSink;
+        private final String latticeDomainHex;
+        private final String versionTag;
+        private final byte[] domainSeed;
+
+        public AIScopeRuntimeConfig(
+                long chainId,
+                String directorAddress,
+                String curatorAddress,
+                String oracleAddress,
+                String relayAddress,
+                String attestationSink,
+                String latticeDomainHex,
+                String versionTag
+        ) {
+            this.chainId = chainId;
+            this.directorAddress = normalizeAddress(directorAddress);
+            this.curatorAddress = normalizeAddress(curatorAddress);
+            this.oracleAddress = normalizeAddress(oracleAddress);
+            this.relayAddress = normalizeAddress(relayAddress);
+            this.attestationSink = normalizeAddress(attestationSink);
+            this.latticeDomainHex = latticeDomainHex == null ? "" : latticeDomainHex.trim();
+            this.versionTag = versionTag == null ? RELEASE_TAG : versionTag;
+            this.domainSeed = buildDomainSeed(this.chainId, this.latticeDomainHex, this.versionTag);
+        }
+
+        private static byte[] buildDomainSeed(long chainId, String latticeHex, String version) {
+            try {
+                MessageDigest md = MessageDigest.getInstance(DIGEST_ALGORITHM);
+                md.update(DOMAIN_SEPARATOR.getBytes(StandardCharsets.UTF_8));
+                md.update(ByteBuffer.allocate(8).putLong(chainId).array());
