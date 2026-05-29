@@ -136,3 +136,72 @@ public final class AI_scope {
     public ModelScopeAnalyzer modelScopes() {
         return modelScopeAnalyzer;
     }
+
+    public InferenceScheduler inference() {
+        return inferenceScheduler;
+    }
+
+    public AttestationBridge attestation() {
+        return attestationBridge;
+    }
+
+    public ResearchLedger ledger() {
+        return researchLedger;
+    }
+
+    public MetricsAggregator metrics() {
+        return metricsAggregator;
+    }
+
+    public ScopeValidator validator() {
+        return scopeValidator;
+    }
+
+    public ReportRenderer reports() {
+        return reportRenderer;
+    }
+
+    public boolean isLanePaused() {
+        return lanePaused.get();
+    }
+
+    public void setLanePaused(boolean paused, String actorAddress) {
+        scopeValidator.requireKnownRole(actorAddress, runtimeConfig.getDirectorAddress());
+        lanePaused.set(paused);
+        researchLedger.appendEvent(new ScopeEvent(
+                paused ? "LaneFrozen" : "LaneResumed",
+                actorAddress,
+                epochCounter.get(),
+                Instant.now()
+        ));
+    }
+
+    public long tickEpoch() {
+        long next = epochCounter.incrementAndGet();
+        metricsAggregator.recordGauge("epoch", next);
+        return next;
+    }
+
+    public long currentEpoch() {
+        return epochCounter.get();
+    }
+
+    public Instant getBootInstant() {
+        return bootInstant;
+    }
+
+    public void requireActiveLane() {
+        if (lanePaused.get()) {
+            throw new ScopeLens_LaneFrozenException();
+        }
+    }
+
+    public String computeScopeDigest(String experimentId, String modelTag, byte[] payload) {
+        try {
+            MessageDigest md = MessageDigest.getInstance(DIGEST_ALGORITHM);
+            md.update(runtimeConfig.getDomainSeed());
+            md.update(experimentId.getBytes(StandardCharsets.UTF_8));
+            md.update(modelTag.getBytes(StandardCharsets.UTF_8));
+            if (payload != null) {
+                md.update(payload);
+            }
