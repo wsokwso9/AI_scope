@@ -343,3 +343,72 @@ public final class AI_scope {
             super("ScopeLens: capacity exceeded — " + detail);
         }
     }
+
+    public static class ScopeLens_NotFoundException extends RuntimeException {
+        public ScopeLens_NotFoundException(String id) {
+            super("ScopeLens: record not found — " + id);
+        }
+    }
+
+    public static class ScopeLens_UnauthorizedRoleException extends RuntimeException {
+        public ScopeLens_UnauthorizedRoleException() {
+            super("ScopeLens: caller lacks required role");
+        }
+    }
+
+    public static class ScopeLens_InvalidAddressException extends RuntimeException {
+        public ScopeLens_InvalidAddressException(String addr) {
+            super("ScopeLens: invalid address — " + addr);
+        }
+    }
+
+    public static class ScopeLens_DigestFailureException extends RuntimeException {
+        public ScopeLens_DigestFailureException(Throwable cause) {
+            super("ScopeLens: digest computation failed", cause);
+        }
+    }
+
+    public static class ScopeLens_ValidationException extends RuntimeException {
+        public ScopeLens_ValidationException(String msg) {
+            super("ScopeLens: validation failed — " + msg);
+        }
+    }
+
+    public static class ScopeLens_AttestationExpiredException extends RuntimeException {
+        public ScopeLens_AttestationExpiredException() {
+            super("ScopeLens: attestation expired");
+        }
+    }
+
+    public static class ScopeLens_HypothesisCycleException extends RuntimeException {
+        public ScopeLens_HypothesisCycleException() {
+            super("ScopeLens: hypothesis graph cycle detected");
+        }
+    }
+
+    public static class ScopeLens_BatchRejectedException extends RuntimeException {
+        public ScopeLens_BatchRejectedException(String reason) {
+            super("ScopeLens: batch rejected — " + reason);
+        }
+    }
+
+    // ─── Immutable event record ──────────────────────────────────────────────────
+
+    public static final class ScopeEvent {
+        private final String verb;
+        private final String actorAddress;
+        private final long epoch;
+        private final Instant recordedAt;
+
+        public ScopeEvent(String verb, String actorAddress, long epoch, Instant recordedAt) {
+            this.verb = verb;
+            this.actorAddress = actorAddress;
+            this.epoch = epoch;
+            this.recordedAt = recordedAt;
+        }
+
+        public String getVerb() {
+            return verb;
+        }
+
+        public String getActorAddress() {
